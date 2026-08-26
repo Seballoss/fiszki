@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fiszki – Sebastian</title>
+<style>
+:root{
+  --bg:#f6f7fb;--panel:#ffffff;--text:#16181d;--muted:#697180;--line:#e6e8ef;
+  --accent:#3157d5;--accent2:#eef2ff;--good:#18794e;--goodbg:#edf9f2;
+  --bad:#b42318;--badbg:#fff0ee;--shadow:0 18px 55px rgba(31,38,59,.11);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:linear-gradient(180deg,#f9faff 0,#f3f5fa 100%);color:var(--text);min-height:100vh;
+}
+button,select,input{font:inherit}
+button{cursor:pointer}
+.app{max-width:1040px;margin:auto;padding:24px 18px 44px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+.brand h1{font-size:24px;margin:0 0 3px;font-weight:800;letter-spacing:-.03em}
+.brand p{margin:0;color:var(--muted);font-size:14px}
+.stats{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pill{background:var(--panel);border:1px solid var(--line);padding:8px 11px;border-radius:999px;font-size:13px;color:var(--muted)}
+.pill strong{color:var(--text)}
+.controls{
+  background:rgba(255,255,255,.82);backdrop-filter:blur(12px);border:1px solid var(--line);
+  border-radius:18px;padding:14px;display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:10px;margin-bottom:18px;
+}
+select,input,.smallbtn{
+  width:100%;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:12px;padding:10px 12px;outline:none
+}
+select:focus,input:focus{border-color:#9eadef;box-shadow:0 0 0 3px #edf0ff}
+.smallbtn{width:auto;white-space:nowrap;font-weight:700}
+.smallbtn:hover{background:#f7f8fc}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:18px;align-items:start}
+.main{min-width:0}
+.progressline{height:7px;background:#e8eaf0;border-radius:999px;overflow:hidden;margin:0 4px 13px}
+.progressline>div{height:100%;width:0;background:var(--accent);transition:width .3s ease}
+.card-wrap{perspective:1300px}
+.card{
+  position:relative;height:410px;transform-style:preserve-3d;transition:transform .48s cubic-bezier(.2,.8,.2,1);
+  cursor:pointer;user-select:none
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute;inset:0;backface-visibility:hidden;background:var(--panel);border:1px solid var(--line);
+  border-radius:28px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:42px 48px;text-align:center
+}
+.back{transform:rotateY(180deg)}
+.kicker{
+  position:absolute;top:22px;left:24px;right:24px;display:flex;justify-content:space-between;gap:12px;
+  color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em
+}
+.word{font-size:clamp(32px,5vw,55px);font-weight:800;line-height:1.1;letter-spacing:-.035em;max-width:800px}
+.translation{font-size:clamp(29px,4.7vw,51px);font-weight:800;line-height:1.12;letter-spacing:-.03em}
+.hint{position:absolute;bottom:22px;color:#8a91a0;font-size:13px}
+.audio{
+  position:absolute;right:24px;bottom:19px;border:1px solid var(--line);background:#fff;border-radius:999px;
+  width:40px;height:40px;display:grid;place-items:center;font-size:18px
+}
+.audio:hover{background:#f6f7fb}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.action{
+  border:0;border-radius:15px;padding:14px 18px;font-weight:800;font-size:15px;display:flex;align-items:center;
+  justify-content:center;gap:8px
+}
+.bad{background:var(--badbg);color:var(--bad)}
+.good{background:var(--goodbg);color:var(--good)}
+.navrow{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px}
+.navbtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;font-weight:700}
+.navbtn:hover{background:#f7f8fc}
+.counter{color:var(--muted);font-size:13px}
+.side{
+  background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:17px;box-shadow:0 10px 35px rgba(31,38,59,.06)
+}
+.side h2{font-size:15px;margin:0 0 12px}
+.sidegrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px}
+.metric{background:#f7f8fb;border-radius:13px;padding:11px}
+.metric b{display:block;font-size:20px;margin-bottom:2px}
+.metric span{font-size:11px;color:var(--muted)}
+.side button{width:100%;margin-top:8px}
+.shortcuts{border-top:1px solid var(--line);margin-top:15px;padding-top:13px;color:var(--muted);font-size:12px;line-height:1.7}
+kbd{background:#f3f4f7;border:1px solid #dfe2e8;border-bottom-width:2px;border-radius:5px;padding:1px 5px;color:#4d5360}
+.empty{
+  display:none;height:410px;background:#fff;border:1px solid var(--line);border-radius:28px;align-items:center;justify-content:center;
+  text-align:center;padding:30px;color:var(--muted)
+}
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:#17191e;color:#fff;padding:10px 14px;
+  border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.25s
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:800px){
+  .stage{grid-template-columns:1fr}.side{order:2}.controls{grid-template-columns:1fr 1fr}.topbar{align-items:flex-start;flex-direction:column}
+  .stats{justify-content:flex-start}.card{height:390px}.face{padding:38px 26px}.word,.translation{font-size:clamp(30px,9vw,44px)}
+}
+@media(max-width:520px){
+  .app{padding:16px 12px 30px}.controls{grid-template-columns:1fr}.card{height:370px}.face{border-radius:22px}
+  .actions{gap:8px}.action{padding:13px 10px}.kicker{top:18px;left:18px;right:18px}.audio{right:18px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <h1>Fiszki · Sebastian</h1>
+      <p>English ↔ Polish · nauka z Twojego Wordbanku</p>
+    </div>
+    <div class="stats">
+      <div class="pill">W zestawie: <strong id="deckCount">0</strong></div>
+      <div class="pill">Znam: <strong id="knownTop">0</strong></div>
+      <div class="pill">Do powtórki: <strong id="repeatTop">0</strong></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <select id="section"></select>
+    <select id="direction">
+      <option value="en-pl">English → Polish</option>
+      <option value="pl-en">Polish → English</option>
+    </select>
+    <select id="status">
+      <option value="all">Wszystkie fiszki</option>
+      <option value="unseen">Jeszcze nieocenione</option>
+      <option value="repeat">Tylko do powtórki</option>
+      <option value="known">Tylko znane</option>
+    </select>
+    <button class="smallbtn" id="shuffle">⇄ Losuj</button>
+  </div>
+
+  <div class="stage">
+    <main class="main">
+      <div class="progressline"><div id="progress"></div></div>
+
+      <div class="card-wrap" id="cardWrap">
+        <div class="card" id="card" role="button" tabindex="0" aria-label="Odwróć fiszkę">
+          <div class="face front">
+            <div class="kicker"><span id="frontLang">English</span><span id="sectionTag"></span></div>
+            <div class="word" id="frontText"></div>
+            <div class="hint">Kliknij kartę lub naciśnij spację, aby odwrócić</div>
+            <button class="audio" id="speak" title="Odsłuchaj angielski" aria-label="Odsłuchaj angielski">🔊</button>
+          </div>
+          <div class="face back">
+            <div class="kicker"><span id="backLang">Polish</span><span>odpowiedź</span></div>
+            <div class="translation" id="backText"></div>
+            <div class="hint">Kliknij ponownie, aby wrócić</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty" id="empty">
+        <div>
+          <h3>Brak fiszek w tym widoku</h3>
+          <p>Zmień filtr albo zresetuj postęp.</p>
+        </div>
+      </div>
+
+      <div class="actions" id="actions">
+        <button class="action bad" id="repeat">↺ Nie znam · powtórz</button>
+        <button class="action good" id="known">✓ Znam</button>
+      </div>
+
+      <div class="navrow">
+        <button class="navbtn" id="prev">← Poprzednia</button>
+        <div class="counter" id="counter">0 / 0</div>
+        <button class="navbtn" id="next">Następna →</button>
+      </div>
+    </main>
+
+    <aside class="side">
+      <h2>Postęp nauki</h2>
+      <div class="sidegrid">
+        <div class="metric"><b id="knownSide">0</b><span>znam</span></div>
+        <div class="metric"><b id="repeatSide">0</b><span>powtórz</span></div>
+        <div class="metric"><b id="unseenSide">0</b><span>nieocenione</span></div>
+        <div class="metric"><b id="pctSide">0%</b><span>opanowane</span></div>
+      </div>
+      <button class="smallbtn" id="shuffleSide">Losuj kolejność</button>
+      <button class="smallbtn" id="reset">Resetuj postęp</button>
+      <div class="shortcuts">
+        <b>Skróty klawiaturowe</b><br>
+        <kbd>Space</kbd> odwróć kartę<br>
+        <kbd>1</kbd> nie znam / powtórz<br>
+        <kbd>2</kbd> znam<br>
+        <kbd>←</kbd> / <kbd>→</kbd> poprzednia / następna
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CARDS = [{"id": 0, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "A", "en": "Acute", "pl": "ostry"}, {"id": 1, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "A", "en": "Additional fee", "pl": "dodatkowa opłata"}, {"id": 2, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "A", "en": "Antibiotics", "pl": "antybiotyki"}, {"id": 3, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "A", "en": "Appointment", "pl": "wizyta"}, {"id": 4, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "A", "en": "Are there any side effects?", "pl": "Czy są jakieś efekty uboczne?"}, {"id": 5, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "A", "en": "Are you traveling for business or pleasure?", "pl": "Czy podróżujesz służbowo czy turystycznie?"}, {"id": 6, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "A", "en": "Aisle seat", "pl": "miejsce przy przejściu"}, {"id": 7, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Baggage allowance", "pl": "dozwolony limit bagażu"}, {"id": 8, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Baggage claim", "pl": "odbiór bagażu"}, {"id": 9, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Baggage tag / luggage tag", "pl": "etykieta bagażowa"}, {"id": 10, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Baked", "pl": "pieczony"}, {"id": 11, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Beer", "pl": "piwo"}, {"id": 12, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Belt", "pl": "pasek"}, {"id": 13, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Bill", "pl": "rachunek"}, {"id": 14, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Blood pressure", "pl": "ciśnienie krwi"}, {"id": 15, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Blood test", "pl": "badanie krwi"}, {"id": 16, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Boarding", "pl": "wejście na pokład"}, {"id": 17, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Boarding pass", "pl": "karta pokładowa"}, {"id": 18, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Boarding starts at…", "pl": "wejście na pokład zaczyna się o…"}, {"id": 19, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Bread", "pl": "chleb"}, {"id": 20, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Bruschetta", "pl": "bruschetta"}, {"id": 21, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "B", "en": "Butter", "pl": "masło"}, {"id": 22, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Cake", "pl": "ciasto"}, {"id": 23, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Can I ask you about…?", "pl": "Czy mogę zapytać o…?"}, {"id": 24, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Can I see your boarding pass, please?", "pl": "Czy mogę zobaczyć kartę pokładową?"}, {"id": 25, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Can I see your passport, please?", "pl": "Czy mogę zobaczyć paszport?"}, {"id": 26, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Can we get the bill, please?", "pl": "Czy możemy prosić o rachunek?"}, {"id": 27, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Can you help me?", "pl": "Czy możesz mi pomóc?"}, {"id": 28, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Carry-on luggage", "pl": "bagaż podręczny"}, {"id": 29, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Check-in", "pl": "zameldowanie / odprawa"}, {"id": 30, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Check-in counter", "pl": "stanowisko odprawy"}, {"id": 31, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Checked luggage", "pl": "bagaż rejestrowany"}, {"id": 32, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Check-out", "pl": "wymeldowanie"}, {"id": 33, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Chicken", "pl": "kurczak"}, {"id": 34, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Chips / crisps", "pl": "chipsy"}, {"id": 35, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Chronic condition", "pl": "choroba przewlekła"}, {"id": 36, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Coffee", "pl": "kawa"}, {"id": 37, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Conveyor belt", "pl": "taśma transportowa"}, {"id": 38, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Could I get…?", "pl": "Czy mogę dostać…?"}, {"id": 39, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Could I have a luggage tag for my carry-on?", "pl": "Czy mogę dostać etykietę na mój bagaż podręczny?"}, {"id": 40, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Could I have an aisle/window seat, please?", "pl": "Czy mogę prosić o miejsce przy przejściu/oknie?"}, {"id": 41, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Cough", "pl": "kaszel"}, {"id": 42, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Cough syrup", "pl": "syrop na kaszel"}, {"id": 43, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "C", "en": "Customs", "pl": "odprawa celna"}, {"id": 44, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Daily special", "pl": "danie dnia"}, {"id": 45, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Decongestant tablets", "pl": "tabletki na zatkany nos"}, {"id": 46, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Departure gate", "pl": "bramka odlotu"}, {"id": 47, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Diagnosis", "pl": "diagnoza"}, {"id": 48, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Dizziness", "pl": "zawroty głowy"}, {"id": 49, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Do I need to remove my laptop?", "pl": "Czy muszę wyjąć laptopa?"}, {"id": 50, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Do you accept credit cards?", "pl": "Czy akceptujecie karty kredytowe?"}, {"id": 51, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Do you have any checked luggage?", "pl": "Czy masz bagaż rejestrowany?"}, {"id": 52, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Do you have anything for…?", "pl": "Czy macie coś na…?"}, {"id": 53, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Doctor", "pl": "lekarz"}, {"id": 54, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Does this dish come with…?", "pl": "Czy to danie jest podawane z…?"}, {"id": 55, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "D", "en": "Drinks", "pl": "napoje"}, {"id": 56, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "E", "en": "Emergency", "pl": "nagły przypadek / sytuacja awaryjna"}, {"id": 57, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "E", "en": "Enjoy your stay", "pl": "udanego pobytu"}, {"id": 58, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "E", "en": "Espresso", "pl": "espresso"}, {"id": 59, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "E", "en": "Extras / sides", "pl": "dodatki"}, {"id": 60, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Facilities", "pl": "udogodnienia"}, {"id": 61, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Fever", "pl": "gorączka"}, {"id": 62, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Fish", "pl": "ryba"}, {"id": 63, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Flight attendant", "pl": "steward / stewardessa"}, {"id": 64, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Flight on time", "pl": "lot punktualny"}, {"id": 65, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Floor", "pl": "piętro"}, {"id": 66, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Follow-up appointment", "pl": "wizyta kontrolna"}, {"id": 67, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Fried", "pl": "smażony"}, {"id": 68, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "F", "en": "Fruit salad", "pl": "sałatka owocowa"}, {"id": 69, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "G", "en": "General Practitioner (GP)", "pl": "lekarz pierwszego kontaktu"}, {"id": 70, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "G", "en": "Grilled", "pl": "grillowany"}, {"id": 71, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "G", "en": "Gym", "pl": "siłownia"}, {"id": 72, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "Have you been to… before?", "pl": "Czy byłeś/aś wcześniej w…?"}, {"id": 73, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "Headache", "pl": "ból głowy"}, {"id": 74, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "Herbal tea", "pl": "herbata ziołowa"}, {"id": 75, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "Hot chocolate", "pl": "gorąca czekolada"}, {"id": 76, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "Hospital", "pl": "szpital"}, {"id": 77, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "How long are you staying?", "pl": "Jak długo zostajesz?"}, {"id": 78, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "How long have you felt this way?", "pl": "Jak długo tak się czujesz?"}, {"id": 79, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "How long have you had this problem?", "pl": "Jak długo masz ten problem?"}, {"id": 80, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "How long is the layover?", "pl": "Jak długo trwa przesiadka?"}, {"id": 81, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "How long should I take it?", "pl": "Jak długo powinienem/powinnam to brać?"}, {"id": 82, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "How much is it?", "pl": "Ile to kosztuje?"}, {"id": 83, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "H", "en": "How often should I take it?", "pl": "Jak często powinienem/powinnam to brać?"}, {"id": 84, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I don't feel well.", "pl": "Nie czuję się dobrze."}, {"id": 85, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I have a fever.", "pl": "Mam gorączkę."}, {"id": 86, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I have a sore throat.", "pl": "Mam ból gardła."}, {"id": 87, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I have pain in my…", "pl": "Mam ból w…"}, {"id": 88, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I have this problem for…", "pl": "Mam ten problem od…"}, {"id": 89, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I've been experiencing…", "pl": "Odczuwam / doświadczam…"}, {"id": 90, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I'd like to check in for my flight to…", "pl": "Chciałbym/chciałabym odprawić się na lot do…"}, {"id": 91, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I'd like to order…", "pl": "Chciałbym/chciałabym zamówić…"}, {"id": 92, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I'll have…", "pl": "Poproszę…"}, {"id": 93, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I'll prescribe you some medication.", "pl": "Przepiszę ci leki."}, {"id": 94, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I'm looking for something for…", "pl": "Szukam czegoś na…"}, {"id": 95, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "I'm worried about…", "pl": "Martwię się o…"}, {"id": 96, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "Ibuprofen", "pl": "ibuprofen"}, {"id": 97, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "Ice cream", "pl": "lody"}, {"id": 98, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "Included", "pl": "wliczone"}, {"id": 99, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "Infection", "pl": "infekcja"}, {"id": 100, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "Inflammation", "pl": "zapalenie"}, {"id": 101, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "Is service included?", "pl": "Czy obsługa jest wliczona?"}, {"id": 102, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "I", "en": "Is there space in the overhead bin?", "pl": "Czy jest miejsce w schowku na bagaż?"}, {"id": 103, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "L", "en": "Laptop", "pl": "laptop"}, {"id": 104, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "L", "en": "Layover", "pl": "przesiadka"}, {"id": 105, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "L", "en": "Liquids", "pl": "płyny"}, {"id": 106, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "L", "en": "Luggage", "pl": "bagaż"}, {"id": 107, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "M", "en": "Main course", "pl": "danie główne"}, {"id": 108, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "M", "en": "Medication", "pl": "leki / lekarstwa"}, {"id": 109, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "M", "en": "Mild", "pl": "łagodny"}, {"id": 110, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "M", "en": "Milkshake", "pl": "koktajl mleczny"}, {"id": 111, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "N", "en": "Nasal spray", "pl": "spray do nosa"}, {"id": 112, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "N", "en": "Nausea", "pl": "nudności"}, {"id": 113, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "N", "en": "Non-EU passport holders", "pl": "osoby posiadające paszport spoza UE"}, {"id": 114, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "N", "en": "Nurse", "pl": "pielęgniarka"}, {"id": 115, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "O", "en": "Overhead bin / compartment", "pl": "schowek na bagaż podręczny"}, {"id": 116, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "O", "en": "Overweight luggage", "pl": "bagaż przekraczający limit wagowy"}, {"id": 117, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "P", "en": "Pain", "pl": "ból"}, {"id": 118, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "P", "en": "Painkillers", "pl": "środki przeciwbólowe"}, {"id": 119, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "P", "en": "Paracetamol", "pl": "paracetamol"}, {"id": 120, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "P", "en": "Passport control", "pl": "kontrola paszportowa"}, {"id": 121, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "P", "en": "Patient", "pl": "pacjent"}, {"id": 122, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "P", "en": "Prescription", "pl": "recepta"}, {"id": 123, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "P", "en": "Pudding", "pl": "pudding"}, {"id": 124, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "R", "en": "Reservation", "pl": "rezerwacja"}, {"id": 125, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "R", "en": "Rest", "pl": "odpoczynek"}, {"id": 126, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "R", "en": "Rooftop", "pl": "dach / taras na dachu"}, {"id": 127, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "R", "en": "Room key", "pl": "klucz do pokoju"}, {"id": 128, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Scanner", "pl": "skaner"}, {"id": 129, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Schengen area", "pl": "strefa Schengen"}, {"id": 130, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Security check", "pl": "kontrola bezpieczeństwa"}, {"id": 131, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Set menu", "pl": "zestaw menu"}, {"id": 132, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Shortness of breath", "pl": "duszność"}, {"id": 133, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Side effects", "pl": "skutki / efekty uboczne"}, {"id": 134, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Specialist", "pl": "specjalista"}, {"id": 135, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Spicy", "pl": "pikantny"}, {"id": 136, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Surgery", "pl": "operacja"}, {"id": 137, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "S", "en": "Symptoms", "pl": "objawy"}, {"id": 138, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "T", "en": "Takeaway", "pl": "na wynos"}, {"id": 139, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "T", "en": "Tests", "pl": "badania"}, {"id": 140, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "T", "en": "Throat lozenges", "pl": "pastylki na gardło"}, {"id": 141, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "T", "en": "Treatment", "pl": "leczenie"}, {"id": 142, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "V", "en": "Vegan", "pl": "wegański"}, {"id": 143, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "V", "en": "Vegetarian", "pl": "wegetariański"}, {"id": 144, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "V", "en": "View", "pl": "widok"}, {"id": 145, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "W", "en": "Water", "pl": "woda"}, {"id": 146, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "W", "en": "What are your symptoms?", "pl": "Jakie są twoje objawy?"}, {"id": 147, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "W", "en": "What do you recommend?", "pl": "Co pan/pani poleca?"}, {"id": 148, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "W", "en": "What is the purpose of your trip?", "pl": "Jaki jest cel twojej podróży?"}, {"id": 149, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "W", "en": "What's the difference?", "pl": "Jaka jest różnica?"}, {"id": 150, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "W", "en": "Where is the nearest bathroom?", "pl": "Gdzie jest najbliższa toaleta?"}, {"id": 151, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "W", "en": "Window seat", "pl": "miejsce przy oknie"}, {"id": 152, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "W", "en": "Would you mind…?", "pl": "Czy miałbyś/miałabyś coś przeciwko…?"}, {"id": 153, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "X", "en": "X-ray", "pl": "zdjęcie rentgenowskie / rentgen"}, {"id": 154, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "Y", "en": "You need to rest.", "pl": "Musisz odpoczywać."}, {"id": 155, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "Y", "en": "You should take this medication three times a day.", "pl": "Powinieneś/powinnaś brać ten lek trzy razy dziennie."}, {"id": 156, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "Y", "en": "Your bag is overweight.", "pl": "Twój bagaż przekracza limit wagowy."}, {"id": 157, "section": "Blok 1 - Sytuacje w życiu codziennym", "letter": "Y", "en": "You're all set.", "pl": "Wszystko gotowe / wszystko w porządku."}, {"id": 158, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "adventurous", "pl": "żądny przygód, otwarty na nowe doświadczenia"}, {"id": 159, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "affordable", "pl": "przystępny cenowo"}, {"id": 160, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "agenda", "pl": "agenda, plan spotkania"}, {"id": 161, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "addictive", "pl": "uzależniający"}, {"id": 162, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "approachable", "pl": "łatwy w kontakcie, przystępny"}, {"id": 163, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "as far as I'm concerned...", "pl": "jeśli chodzi o mnie..."}, {"id": 164, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "authentic", "pl": "autentyczny"}, {"id": 165, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "awkward", "pl": "niezręczny"}, {"id": 166, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "A", "en": "awkward silence", "pl": "niezręczna cisza"}, {"id": 167, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "B", "en": "balanced", "pl": "zrównoważony"}, {"id": 168, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "B", "en": "bland", "pl": "mdły, bez smaku"}, {"id": 169, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "B", "en": "body language", "pl": "mowa ciała"}, {"id": 170, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "B", "en": "break the ice", "pl": "przełamać lody"}, {"id": 171, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "B", "en": "build rapport", "pl": "budować dobrą relację / porozumienie"}, {"id": 172, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "charismatic", "pl": "charyzmatyczny"}, {"id": 173, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "collaboration", "pl": "współpraca"}, {"id": 174, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "come across as", "pl": "sprawiać wrażenie"}, {"id": 175, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "common ground", "pl": "wspólne zainteresowania / wspólny punkt"}, {"id": 176, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "confident", "pl": "pewny siebie"}, {"id": 177, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "connect with", "pl": "nawiązać kontakt z, czuć więź z"}, {"id": 178, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "consistent", "pl": "konsekwentny, systematyczny"}, {"id": 179, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "comforting", "pl": "pocieszający, kojący"}, {"id": 180, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "couldn't disagree more", "pl": "kompletnie się nie zgadzam"}, {"id": 181, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "curious", "pl": "ciekawski, ciekawy"}, {"id": 182, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "C", "en": "come across as", "pl": "sprawiać wrażenie"}, {"id": 183, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "D", "en": "deadline", "pl": "termin ostateczny"}, {"id": 184, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "D", "en": "delicious", "pl": "pyszny"}, {"id": 185, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "D", "en": "disappointing", "pl": "rozczarowujący"}, {"id": 186, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "D", "en": "distracted", "pl": "rozproszony"}, {"id": 187, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "D", "en": "delicious", "pl": "smaczny"}, {"id": 188, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "E", "en": "engaging", "pl": "angażujący, wciągający"}, {"id": 189, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "E", "en": "every now and then", "pl": "od czasu do czasu"}, {"id": 190, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "E", "en": "effortless", "pl": "niewymagający wysiłku, naturalny"}, {"id": 191, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "E", "en": "etiquette", "pl": "etykieta, zasady właściwego zachowania"}, {"id": 192, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "E", "en": "expensive", "pl": "drogi"}, {"id": 193, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "E", "en": "eye contact", "pl": "kontakt wzrokowy"}, {"id": 194, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "F", "en": "feedback", "pl": "informacja zwrotna"}, {"id": 195, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "F", "en": "filling", "pl": "sycący"}, {"id": 196, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "F", "en": "first impression", "pl": "pierwsze wrażenie"}, {"id": 197, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "F", "en": "flavourful", "pl": "pełen smaku"}, {"id": 198, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "F", "en": "follow-up question", "pl": "pytanie dodatkowe / pytanie pogłębiające"}, {"id": 199, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "G", "en": "generally", "pl": "ogólnie, zazwyczaj"}, {"id": 200, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "G", "en": "genuine", "pl": "szczery, autentyczny"}, {"id": 201, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "G", "en": "get along with", "pl": "dogadywać się z"}, {"id": 202, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "G", "en": "get into something", "pl": "zainteresować się czymś / zacząć coś robić"}, {"id": 203, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "H", "en": "habit", "pl": "nawyk"}, {"id": 204, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "H", "en": "hardly ever", "pl": "prawie nigdy"}, {"id": 205, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "H", "en": "how did you get into that?", "pl": "Jak się tym zainteresowałeś/aś?"}, {"id": 206, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "H", "en": "how do you know the host?", "pl": "Skąd znasz gospodarza?"}, {"id": 207, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "icebreaker", "pl": "sposób na przełamanie lodów"}, {"id": 208, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "insightful", "pl": "wnikliwy"}, {"id": 209, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "it depends on...", "pl": "to zależy od..."}, {"id": 210, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "it depends on the day", "pl": "to zależy od dnia"}, {"id": 211, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I can’t function without...", "pl": "nie mogę funkcjonować bez..."}, {"id": 212, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I couldn’t disagree more.", "pl": "kompletnie się z tym nie zgadzam"}, {"id": 213, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I don’t really think about it.", "pl": "nigdy specjalnie o tym nie myślę"}, {"id": 214, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I see where you’re coming from.", "pl": "rozumiem twój punkt widzenia"}, {"id": 215, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I tend to...", "pl": "mam tendencję do..."}, {"id": 216, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I try to...", "pl": "staram się..."}, {"id": 217, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I’m not convinced that...", "pl": "nie jestem przekonany/a, że..."}, {"id": 218, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I’m not very good at...", "pl": "nie jestem zbyt dobry/a w..."}, {"id": 219, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I’m trying to...", "pl": "próbuję / staram się..."}, {"id": 220, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "I", "en": "I’ve recently started...", "pl": "ostatnio zacząłem/zaczęłam..."}, {"id": 221, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "K", "en": "keep a conversation going", "pl": "podtrzymywać rozmowę"}, {"id": 222, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "L", "en": "lately", "pl": "ostatnio"}, {"id": 223, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "L", "en": "lively", "pl": "żywy, ożywiony"}, {"id": 224, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "M", "en": "make a good impression", "pl": "zrobić dobre wrażenie"}, {"id": 225, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "M", "en": "meaningful", "pl": "znaczący, wartościowy"}, {"id": 226, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "M", "en": "memorable", "pl": "niezapomniany"}, {"id": 227, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "M", "en": "motivated", "pl": "zmotywowany"}, {"id": 228, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "M", "en": "most of the time", "pl": "przez większość czasu"}, {"id": 229, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "M", "en": "motivation", "pl": "motywacja"}, {"id": 230, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "N", "en": "nowadays", "pl": "obecnie, w dzisiejszych czasach"}, {"id": 231, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "N", "en": "negotiation", "pl": "negocjacje"}, {"id": 232, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "N", "en": "networking", "pl": "budowanie kontaktów zawodowych"}, {"id": 233, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "often", "pl": "często"}, {"id": 234, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "one thing that helps me is...", "pl": "jedną rzeczą, która mi pomaga, jest..."}, {"id": 235, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "one-sided", "pl": "jednostronny"}, {"id": 236, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "once in a while", "pl": "od czasu do czasu"}, {"id": 237, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "open-minded", "pl": "otwarty na nowe idee"}, {"id": 238, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "open up", "pl": "otworzyć się"}, {"id": 239, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "organized", "pl": "zorganizowany"}, {"id": 240, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "outgoing", "pl": "towarzyski, otwarty"}, {"id": 241, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "overwhelmed", "pl": "przytłoczony"}, {"id": 242, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "O", "en": "overrated", "pl": "przeceniany"}, {"id": 243, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "P", "en": "personally, I think...", "pl": "osobiście uważam, że..."}, {"id": 244, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "P", "en": "productive", "pl": "produktywny"}, {"id": 245, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "P", "en": "productivity", "pl": "produktywność"}, {"id": 246, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "P", "en": "professionalism", "pl": "profesjonalizm"}, {"id": 247, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "R", "en": "rapport", "pl": "dobra relacja, porozumienie"}, {"id": 248, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "R", "en": "recently", "pl": "ostatnio"}, {"id": 249, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "R", "en": "refreshing", "pl": "orzeźwiający"}, {"id": 250, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "R", "en": "relate to", "pl": "utożsamiać się z, odnosić się do"}, {"id": 251, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "R", "en": "reserved", "pl": "powściągliwy, zamknięty"}, {"id": 252, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "R", "en": "responsibilities", "pl": "obowiązki"}, {"id": 253, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "R", "en": "routine", "pl": "rutyna"}, {"id": 254, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "S", "en": "satisfying", "pl": "satysfakcjonujący"}, {"id": 255, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "S", "en": "schedule", "pl": "harmonogram"}, {"id": 256, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "S", "en": "small talk", "pl": "luźna, niezobowiązująca rozmowa"}, {"id": 257, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "S", "en": "spicy", "pl": "pikantny"}, {"id": 258, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "S", "en": "strike up a conversation", "pl": "rozpocząć rozmowę"}, {"id": 259, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "S", "en": "strengths", "pl": "mocne strony"}, {"id": 260, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "S", "en": "superficial", "pl": "powierzchowny"}, {"id": 261, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "talkative", "pl": "rozmowny"}, {"id": 262, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "teamwork", "pl": "praca zespołowa"}, {"id": 263, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "that's a fair point, but...", "pl": "to dobry argument, ale..."}, {"id": 264, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "that's a good question", "pl": "to dobre pytanie"}, {"id": 265, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "that's interesting", "pl": "to interesujące"}, {"id": 266, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "thoughtful", "pl": "refleksyjny, troskliwy"}, {"id": 267, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "thought-provoking", "pl": "skłaniający do myślenia"}, {"id": 268, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "to be honest...", "pl": "szczerze mówiąc..."}, {"id": 269, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "to be honest", "pl": "szczerze mówiąc"}, {"id": 270, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "T", "en": "to be organized", "pl": "być zorganizowanym"}, {"id": 271, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "U", "en": "unhealthy", "pl": "niezdrowy"}, {"id": 272, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "U", "en": "unusual", "pl": "nietypowy"}, {"id": 273, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "U", "en": "underrated", "pl": "niedoceniany"}, {"id": 274, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "U", "en": "usually", "pl": "zazwyczaj"}, {"id": 275, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "W", "en": "weaknesses", "pl": "słabe strony"}, {"id": 276, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "W", "en": "what brings you here?", "pl": "Co cię tutaj sprowadza?"}, {"id": 277, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "W", "en": "what do you do for a living?", "pl": "Czym zajmujesz się zawodowo?"}, {"id": 278, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "W", "en": "what was that like?", "pl": "Jak to było?"}, {"id": 279, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "W", "en": "what do you recommend?", "pl": "Co polecasz?"}, {"id": 280, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "W", "en": "where you're coming from", "pl": "punkt widzenia, perspektywa"}, {"id": 281, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "W", "en": "witty", "pl": "dowcipny, błyskotliwy"}, {"id": 282, "section": "Blok 2 - Konwersacje w życiu codziennym", "letter": "W", "en": "worth trying", "pl": "wart spróbowania"}, {"id": 283, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Interview", "pl": "rozmowa kwalifikacyjna"}, {"id": 284, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Strengths", "pl": "mocne strony"}, {"id": 285, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Weaknesses", "pl": "słabe strony"}, {"id": 286, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Responsibilities", "pl": "obowiązki"}, {"id": 287, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Motivation", "pl": "motywacja"}, {"id": 288, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Teamwork", "pl": "praca zespołowa"}, {"id": 289, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Professionalism", "pl": "profesjonalizm"}, {"id": 290, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Deadline", "pl": "ostateczny termin"}, {"id": 291, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Negotiation", "pl": "negocjacje"}, {"id": 292, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Feedback", "pl": "informacja zwrotna"}, {"id": 293, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Agenda", "pl": "agenda, plan spotkania"}, {"id": 294, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Networking", "pl": "networking, budowanie kontaktów zawodowych"}, {"id": 295, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Etiquette", "pl": "etykieta, zasady zachowania"}, {"id": 296, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Collaboration", "pl": "współpraca"}, {"id": 297, "section": "💼 DODATKOWE SŁOWNICTWO – WORK & INTERVIEWS", "letter": "", "en": "Productivity", "pl": "produktywność"}];
+const STORAGE_KEY = "sebastian_flashcards_v1";
+const state = {
+  progress: JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"),
+  section: "all", direction: "en-pl", status: "all",
+  order: [], pos: 0, flipped: false
+};
+
+const $ = id => document.getElementById(id);
+const els = {
+  section:$("section"), direction:$("direction"), status:$("status"), card:$("card"),
+  frontText:$("frontText"), backText:$("backText"), frontLang:$("frontLang"), backLang:$("backLang"),
+  sectionTag:$("sectionTag"), counter:$("counter"), progress:$("progress"), empty:$("empty"),
+  cardWrap:$("cardWrap"), actions:$("actions"), deckCount:$("deckCount"), knownTop:$("knownTop"),
+  repeatTop:$("repeatTop"), knownSide:$("knownSide"), repeatSide:$("repeatSide"),
+  unseenSide:$("unseenSide"), pctSide:$("pctSide"), toast:$("toast")
+};
+
+function cardKey(c){ return String(c.id); }
+function statusOf(c){ return state.progress[cardKey(c)] || "unseen"; }
+
+function sectionLabel(s){
+  if(s.startsWith("Blok 1")) return "Blok 1 · Sytuacje w życiu codziennym";
+  if(s.startsWith("Blok 2")) return "Blok 2 · Konwersacje w życiu codziennym";
+  return "Work & Interviews";
+}
+
+function initSections(){
+  const unique = [...new Set(CARDS.map(c=>c.section))];
+  els.section.innerHTML = `<option value="all">Wszystkie działy (${CARDS.length})</option>` +
+    unique.map(s => {
+      const n = CARDS.filter(c=>c.section===s).length;
+      return `<option value="${escapeHtml(s)}">${escapeHtml(sectionLabel(s))} (${n})</option>`;
+    }).join("");
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+}
+
+function filteredCards(){
+  return CARDS.filter(c => {
+    const sec = state.section==="all" || c.section===state.section;
+    const st = state.status==="all" || statusOf(c)===state.status;
+    return sec && st;
+  });
+}
+
+function rebuild(keepId=null){
+  const list = filteredCards();
+  state.order = list.map(c=>c.id);
+  if(keepId!=null && state.order.includes(keepId)) state.pos = state.order.indexOf(keepId);
+  else state.pos = Math.min(state.pos, Math.max(0,state.order.length-1));
+  state.flipped=false;
+  render();
+}
+
+function current(){
+  if(!state.order.length) return null;
+  return CARDS.find(c=>c.id===state.order[state.pos]);
+}
+
+function render(){
+  const c=current();
+  const has=!!c;
+  els.cardWrap.style.display=has?"block":"none";
+  els.actions.style.display=has?"grid":"none";
+  els.empty.style.display=has?"none":"flex";
+
+  if(has){
+    const enFirst=state.direction==="en-pl";
+    els.frontText.textContent=enFirst?c.en:c.pl;
+    els.backText.textContent=enFirst?c.pl:c.en;
+    els.frontLang.textContent=enFirst?"English":"Polish";
+    els.backLang.textContent=enFirst?"Polish":"English";
+    els.sectionTag.textContent=(c.letter?c.letter+" · ":"")+sectionLabel(c.section).replace(/^Blok \d · /,"");
+    els.card.classList.toggle("flipped",state.flipped);
+    els.counter.textContent=`${state.pos+1} / ${state.order.length}`;
+    els.progress.style.width=`${((state.pos+1)/state.order.length)*100}%`;
+  }else{
+    els.counter.textContent=`0 / 0`;
+    els.progress.style.width="0%";
+  }
+  updateStats();
+}
+
+function updateStats(){
+  const base = CARDS.filter(c=>state.section==="all" || c.section===state.section);
+  const known=base.filter(c=>statusOf(c)==="known").length;
+  const repeat=base.filter(c=>statusOf(c)==="repeat").length;
+  const unseen=base.length-known-repeat;
+  const pct=base.length?Math.round(known/base.length*100):0;
+
+  els.deckCount.textContent=base.length;
+  els.knownTop.textContent=known;
+  els.repeatTop.textContent=repeat;
+  els.knownSide.textContent=known;
+  els.repeatSide.textContent=repeat;
+  els.unseenSide.textContent=unseen;
+  els.pctSide.textContent=pct+"%";
+}
+
+function flip(){ if(current()){state.flipped=!state.flipped;render();} }
+function next(){ if(state.order.length){state.pos=(state.pos+1)%state.order.length;state.flipped=false;render();} }
+function prev(){ if(state.order.length){state.pos=(state.pos-1+state.order.length)%state.order.length;state.flipped=false;render();} }
+
+function mark(value){
+  const c=current(); if(!c)return;
+  const id=c.id;
+  state.progress[cardKey(c)]=value;
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state.progress));
+  showToast(value==="known"?"Zapisano: znam ✓":"Dodano do powtórki ↺");
+  if(state.status==="all"){
+    next();
+  }else{
+    rebuild();
+  }
+}
+
+function shuffle(){
+  for(let i=state.order.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [state.order[i],state.order[j]]=[state.order[j],state.order[i]];
+  }
+  state.pos=0; state.flipped=false; render(); showToast("Kolejność wylosowana");
+}
+
+function showToast(msg){
+  els.toast.textContent=msg; els.toast.classList.add("show");
+  clearTimeout(showToast.t); showToast.t=setTimeout(()=>els.toast.classList.remove("show"),1200);
+}
+
+function speakEnglish(e){
+  e.stopPropagation();
+  const c=current(); if(!c || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(c.en);
+  u.lang="en-US"; u.rate=.9;
+  speechSynthesis.speak(u);
+}
+
+els.card.addEventListener("click",e=>{ if(!e.target.closest("#speak")) flip(); });
+els.card.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();flip();}});
+$("speak").addEventListener("click",speakEnglish);
+$("next").addEventListener("click",next);
+$("prev").addEventListener("click",prev);
+$("known").addEventListener("click",()=>mark("known"));
+$("repeat").addEventListener("click",()=>mark("repeat"));
+$("shuffle").addEventListener("click",shuffle);
+$("shuffleSide").addEventListener("click",shuffle);
+
+els.section.addEventListener("change",e=>{state.section=e.target.value;state.pos=0;rebuild();});
+els.direction.addEventListener("change",e=>{state.direction=e.target.value;state.flipped=false;render();});
+els.status.addEventListener("change",e=>{state.status=e.target.value;state.pos=0;rebuild();});
+
+$("reset").addEventListener("click",()=>{
+  if(confirm("Na pewno zresetować cały zapisany postęp?")){
+    state.progress={};localStorage.removeItem(STORAGE_KEY);state.pos=0;rebuild();showToast("Postęp zresetowany");
+  }
+});
+
+document.addEventListener("keydown",e=>{
+  if(["SELECT","INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
+  if(e.code==="Space"){e.preventDefault();flip();}
+  else if(e.key==="ArrowRight") next();
+  else if(e.key==="ArrowLeft") prev();
+  else if(e.key==="1") mark("repeat");
+  else if(e.key==="2") mark("known");
+});
+
+initSections();
+rebuild();
+</script>
+</body>
+</html>
